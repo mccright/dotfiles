@@ -1,0 +1,78 @@
+[user]
+    name = Corey Goldberg
+    email = cgoldberg@gmail.com
+
+[pager]
+    diff = false
+
+[color]
+    ui = always
+    branch = always
+    diff = always
+    interactive = always
+    status = always
+
+[branch]
+    autosetupmerge = always
+    autosetuprebase = always
+
+[push]
+    default = simple
+
+[alias]
+    # basic shortcuts
+    b = branch
+    cl = clone
+    co = checkout
+    com = checkout master
+    i = info
+    po = push origin
+    pom = push origin master
+    s = status
+
+    # clone a github repo
+    ghclone = "!f() { git clone https://github.com/${1}/${2}; }; f"
+
+    # show diffs piped through a pager
+    df = "!f() { git --paginate diff; }; f"
+
+    # show diff of current branch against master
+    diffm = "!f() { git diff master...\"$(git rev-parse --abbrev-ref HEAD)\"; }; f"
+    dfm = "!f() { git diff master...\"$(git rev-parse --abbrev-ref HEAD)\"; }; f"
+
+    # list all git aliases
+    alias = "!f() { git config --list | grep alias | cut -c 7- | sort; }; f"
+    la = "!f() { git config --list | grep alias | cut -c 7- | sort; }; f"
+
+    # change last commit
+    amend = commit -a --amend
+
+    # commit changes with inline message
+    ci = !git commit -a -m $2
+
+    # open Github page for current repo
+    open = "!f() { xdg-open `git remote -v | awk '/fetch/{print $2}' | sed -Ee 's#(git@|git://)#http://#' -e 's@com:@com/@'`; }; f"
+
+    # show pretty commit logs
+    ls = log --pretty=format:'%C(auto,yellow)%h %C(auto,blue)%>(12,trunc)%ar %C(auto,magenta)%<(14,trunc)%aN %C(auto,green)%s%Creset'
+    ll = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+
+    # fetch changes from remote and rebase local branch
+    up = "!f() { git fetch && git pull --rebase origin \"$(git rev-parse --abbrev-ref HEAD)\"; }; f"
+
+    # reset local branch to HEAD and delete untracked files
+    blowaway = "!f() { git fetch && git reset --hard @{upstream} && git clean -d -x --force; }; f"
+
+    # list local branches with last commit date and commit hash, sorted by last modified
+    branches = "!f() { git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'; }; f"
+
+    # cleanup merged branches
+    brclean = "!f() { git branch --merged | grep -v master | xargs -r git branch -d; }; f"
+
+    # sync local fork with upstream repo
+    sync-upstream = "!f() { git fetch upstream && git checkout master && git rebase upstream/master && git push origin master; }; f"
+
+[filter "lfs"]
+    smudge = git-lfs smudge %f
+    required = true
+    clean = git-lfs clean %f

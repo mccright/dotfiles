@@ -1,0 +1,88 @@
+# ~/.bashrc_windows
+# =========================
+#  bash shell configuration
+# =========================
+
+
+# only use this file on Windows/MinGW
+if [[ "${OSTYPE}" != "msys" ]]; then
+    return
+fi
+
+
+# set the terminal title to current directory
+PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
+
+
+# python virtual env
+alias activate="source ./venv/Scripts/activate"
+alias deact="deactivate"
+alias venv="[ ! -d venv/ ] && python3 -m venv --upgrade-deps venv && activate || activate"
+
+
+# exit shell
+alias x="history -n; history -w; TASKKILL //F //IM git.exe >/dev/null 2>&1; exit"
+
+
+# delete crap in /tmp
+alias clean-tmp="rm -rf /tmp/* /tmp/.*"
+
+
+# open url or file in chrome browser
+web () {
+    if [ -z "$1" ]; then
+        err "please enter a file or url"
+        return 1
+    fi
+    if [[ "$1" == http* ]]; then
+        python -m webbrowser -t "$1"
+    else
+        python -c "import os, webbrowser; \
+            file_path = os.path.abspath('$1'); \
+            chrome_path = 'C:/Program Files/Google/Chrome/Application/chrome.exe'; \
+            webbrowser.register('chrome', None, webbrowser.BackgroundBrowser(chrome_path)); \
+            webbrowser.get('chrome').open(f'file://{file_path}')"
+    fi
+}
+
+
+# update all packages installed by scoop
+scoop-update-all () {
+    if [ ! -x "$(type -pP fd)" ]; then
+        err "scoop not installed"
+        return 1
+    fi
+    scoop update
+    scoop status
+    echo "Updating Packages..."
+    scoop status | sed '/^[[:space:]]*$/d' | while read -r line; do
+        if [[ ! "${line}" =~ ^Scoop|^Everything|^Name|^---- ]]; then
+            read -ra fields <<< "${line}"
+            package="${fields[0]}"
+            scoop update "${package}"
+        fi
+    done
+    local apps_path=~/Scoop/apps
+    if [ ! -d "${apps_path}" ]; then
+        err "can't find scoop apps"
+        return 1
+    fi
+    echo "Deleting Old Packages..."
+    for d in "${apps_path}"/*/; do
+        local dir_count=$(find "${d}" -mindepth 1 -maxdepth 1 -type d ! -type l | wc -l)
+        if [ "${dir_count}" -gt 1 ]; then
+            local oldest_version_dir=$(find "${d}" -mindepth 1 -maxdepth 1 -type d ! -type l | sort -V | head -n 1)
+            echo "deleting ${oldest_version_dir}"
+            rm -rf "${oldest_version_dir}"
+        fi
+    done
+    echo "Deleting Cache..."
+    scoop cache rm *
+    echo
+    ok "done"
+}
+
+
+if [ "${PWD}" == "${HOME}" ] && [ -z "${OLDPWD}" ] && [ -d "${HOME}/code" ]; then
+    cd "${HOME}/code"
+fi
